@@ -1,9 +1,6 @@
 import { View, Text, Button } from "react-native";
 import { router } from "expo-router";
 
-export const options = {
-  title: "Início",
-};
 
 export default function Index() {
   return (
@@ -19,6 +16,7 @@ export default function Index() {
         title="Ver Cardápio 🍕"
         onPress={() => router.push("/cardapio")}
       />
+    
     </View>
   );
 }
