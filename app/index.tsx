@@ -24,6 +24,19 @@ export default function Index() {
           resizeMode: "contain",
         }}
       />
+
+      <Image
+
+        source={require("../assets/images/melhor-pizza2.0.png")}
+        style={{
+          width: 300,
+          height: 300,
+          borderRadius: 20,
+        }}
+
+
+      />
+
     </View>
   );
 }
