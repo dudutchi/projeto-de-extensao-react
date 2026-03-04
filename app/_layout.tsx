@@ -7,6 +7,10 @@ export default function Layout() {
         name="index"
         options={{ title: "Início" }}
       />
+      <Stack.Screen
+      name="OndeEstamos"
+      options={{ title: "Onde Estamos" }}
+      />
     </Stack>
   );
 }
