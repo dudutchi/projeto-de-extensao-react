@@ -2,6 +2,8 @@ import { router } from "expo-router";
 import { push } from "expo-router/build/global-state/routing";
 import { View, Text, Image, Button  } from "react-native";
 
+
+
 export default function OndeEstamos() {
   return (
     <View
@@ -10,7 +12,7 @@ export default function OndeEstamos() {
         alignItems: "center",
       }}
     >
-      <Text style= {{top:10,}}>
+      <Text style= {{marginTop:5,}}>
         ONDE NOS ENCONTRAR!📍</Text>
 
       <Image
@@ -34,14 +36,9 @@ export default function OndeEstamos() {
         Basta buscar por: “Pizzaria CarioK – Rua Venceslau 318, Méier”.
       </Text>
 
-      <Button 
-      title="Voltar"
-      onPress={() => router.push("/")}
-      />
-
       <Button
       title="Promoções"
-      onPress={() => router.push("/")}
+      onPress={() => router.push("/promocoes")}
       />
     </View>
   );

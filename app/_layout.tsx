@@ -11,6 +11,10 @@ export default function Layout() {
       name="OndeEstamos"
       options={{ title: "Onde Estamos" }}
       />
+      <Stack.Screen
+      name="promocoes"
+      options={{title: "Promoções"}}
+      />
     </Stack>
   );
 }
