@@ -31,13 +31,7 @@ export default function Layout() {
         }}
       />
 
-      <Drawer.Screen
-        name="fazer-pedido"
-        options={{
-          title: "Fazer Pedido",
-        }}
-      />
-
+    
       <Drawer.Screen
         name="OndeEstamos"
         options={{
@@ -51,6 +45,14 @@ export default function Layout() {
           title: "Promoções",
         }}
       />
+      
+        <Drawer.Screen
+        name="pedido"
+        options={{
+          title: "Fazer Pedido",
+        }}
+      />
+
     </Drawer>
   );
 }
