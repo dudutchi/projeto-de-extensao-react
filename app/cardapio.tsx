@@ -1,17 +1,46 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
-    SafeAreaView,
-    ScrollView,
-    Text,
-    View,
-    useWindowDimensions,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+  TouchableOpacity,
 } from "react-native";
 
+// --- TIPAGENS ---
 interface MenuItemProps {
   name: string;
   description?: string;
-  price: string;
+  price?: string;
 }
+
+type PizzaCategory = "tradicional" | "especial" | "doce";
+
+interface PizzaMenuItemProps extends Omit<MenuItemProps, "price"> {
+  category: PizzaCategory;
+  responsive: ReturnType<typeof useResponsive>;
+}
+
+// --- LÓGICA DE PREÇOS CENTRALIZADA ---
+// Única fonte da verdade para os preços por tamanho e categoria
+const PIZZA_PRICES: Record<PizzaCategory, { size: string; price: string }[]> = {
+  tradicional: [
+    { size: "25cm (Broto)", price: "R$ 35,90" },
+    { size: "35cm (Média)", price: "R$ 55,90" },
+    { size: "45cm (Família)", price: "R$ 68,90" },
+  ],
+  especial: [
+    { size: "25cm (Broto)", price: "R$ 45,90" },
+    { size: "35cm (Média)", price: "R$ 65,90" },
+    { size: "45cm (Família)", price: "R$ 78,90" },
+  ],
+  doce: [
+    { size: "25cm (Broto)", price: "R$ 39,90" },
+    { size: "35cm (Média)", price: "R$ 59,90" },
+    { size: "45cm (Família)", price: "R$ 72,90" },
+  ],
+};
 
 const useResponsive = () => {
   const { width } = useWindowDimensions();
@@ -32,11 +61,13 @@ const useResponsive = () => {
       sectionPadding: isTablet ? 24 : 16,
       itemMargin: isTablet ? 18 : 14,
     }),
-    [width, isTablet],
+    [width, isTablet]
   );
 };
 
-// Componente auxiliar para os itens da lista
+// --- COMPONENTES AUXILIARES ---
+
+// 1. Componente para itens normais com preço fixo (Bebidas, Bordas)
 const MenuItem: React.FC<
   MenuItemProps & { responsive: ReturnType<typeof useResponsive> }
 > = ({ name, description, price, responsive }) => (
@@ -74,18 +105,130 @@ const MenuItem: React.FC<
         </Text>
       )}
     </View>
-    <Text
-      style={{
-        fontSize: responsive.priceSize,
-        fontWeight: "700",
-        color: "#1a5c1a",
-      }}
-    >
-      {price}
-    </Text>
+    {price && (
+      <Text
+        style={{
+          fontSize: responsive.priceSize,
+          fontWeight: "700",
+          color: "#1a5c1a",
+        }}
+      >
+        {price}
+      </Text>
+    )}
   </View>
 );
 
+// 2. Novo componente interativo para Pizzas (abre tabela de preços)
+const PizzaMenuItem: React.FC<PizzaMenuItemProps> = ({
+  name,
+  description,
+  category,
+  responsive,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const prices = PIZZA_PRICES[category];
+
+  return (
+    <View
+      style={{
+        marginBottom: responsive.itemMargin,
+        borderBottomWidth: 1,
+        borderBottomColor: "#e0e0e0",
+        paddingBottom: responsive.itemMargin - 2,
+      }}
+    >
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setIsExpanded(!isExpanded)}
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text
+            style={{
+              fontSize: responsive.itemNameSize,
+              fontWeight: "600",
+              color: "#0f3d0f",
+            }}
+          >
+            {name}
+          </Text>
+          {description && (
+            <Text
+              style={{
+                fontSize: responsive.descriptionSize,
+                color: "#666",
+                fontStyle: "italic",
+                marginTop: 4,
+              }}
+            >
+              {description}
+            </Text>
+          )}
+        </View>
+        {/* Indicador visual discreto de interação */}
+        <Text
+          style={{
+            fontSize: responsive.priceSize,
+            color: "#1a5c1a",
+            fontWeight: "600",
+          }}
+        >
+          {isExpanded ? "▲" : "▼"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Tabela de Preços Expandida */}
+      {isExpanded && (
+        <View
+          style={{
+            marginTop: 12,
+            backgroundColor: "#f4f9f4", // Fundo verde super claro para não quebrar o design
+            borderRadius: 6,
+            padding: 12,
+          }}
+        >
+          {prices.map((item, index) => (
+            <View
+              key={index}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingVertical: 4,
+                borderBottomWidth: index === prices.length - 1 ? 0 : 1, // Remove borda do último item
+                borderBottomColor: "#e0e0e0",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: responsive.descriptionSize,
+                  color: "#0f3d0f",
+                }}
+              >
+                {item.size}
+              </Text>
+              <Text
+                style={{
+                  fontSize: responsive.descriptionSize,
+                  fontWeight: "700",
+                  color: "#1a5c1a",
+                }}
+              >
+                {item.price}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
+
+// --- TELA PRINCIPAL ---
 export default function Cardapio() {
   const responsive = useResponsive();
 
@@ -147,49 +290,23 @@ export default function Cardapio() {
           >
             ⭐ Destaques da Semana
           </Text>
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Pizza da Casa"
             description="Mussarela, calabresa, cebola, pimentão e azeitona - Nossa favorita!"
-            price="A partir de R$ 45,90"
+            category="tradicional"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Especial CarioK"
             description="Mussarela, presunto, frango, milho e banana - Ousada e deliciosa!"
-            price="A partir de R$ 50,90"
+            category="especial"
           />
         </View>
 
-        {/* Categoria: Tamanhos */}
-        <View
-          style={{
-            marginBottom: 28,
-            backgroundColor: "#f9f9f9",
-            borderLeftWidth: 4,
-            borderLeftColor: "#1a5c1a",
-            padding: responsive.sectionPadding,
-            borderRadius: 8,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: responsive.sectionTitleSize,
-              fontWeight: "700",
-              color: "#0f3d0f",
-              marginBottom: responsive.itemMargin,
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
-            📏 Tamanhos
-          </Text>
-          <MenuItem responsive={responsive} name="25cm" price="R$ 35,90" />
-          <MenuItem responsive={responsive} name="35cm" price="R$ 55,90" />
-          <MenuItem responsive={responsive} name="45cm" price="R$ 68,90" />
-        </View>
+        {/* SEÇÃO "TAMANHOS" FOI REMOVIDA CONFORME REGRA DE IMPLEMENTAÇÃO */}
 
-        {/* Categoria: Bordas */}
+        {/* Categoria: Bordas (Usa MenuItem normal pois o preço é fixo) */}
         <View
           style={{
             marginBottom: 28,
@@ -212,21 +329,9 @@ export default function Cardapio() {
           >
             🧀 Bordas Recheadas
           </Text>
-          <MenuItem
-            responsive={responsive}
-            name="Catupiry ou Cheddar"
-            price="R$ 15,00"
-          />
-          <MenuItem
-            responsive={responsive}
-            name="Cream Cheese"
-            price="R$ 17,00"
-          />
-          <MenuItem
-            responsive={responsive}
-            name="Chocolate (Preto/Branco)"
-            price="R$ 20,00"
-          />
+          <MenuItem responsive={responsive} name="Catupiry ou Cheddar" price="R$ 15,00" />
+          <MenuItem responsive={responsive} name="Cream Cheese" price="R$ 17,00" />
+          <MenuItem responsive={responsive} name="Chocolate (Preto/Branco)" price="R$ 20,00" />
         </View>
 
         {/* Categoria: Tradicionais */}
@@ -252,23 +357,23 @@ export default function Cardapio() {
           >
             🍕 Pizzas Tradicionais
           </Text>
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Mussarela"
             description="Molho de tomate, mussarela e orégano"
-            price="A partir de R$ 35,90"
+            category="tradicional"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Calabresa"
             description="Molho de tomate, calabresa, cebola e orégano"
-            price="A partir de R$ 38,90"
+            category="tradicional"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Portuguesa"
             description="Mussarela, presunto, cebola, ovo e azeitona"
-            price="A partir de R$ 42,90"
+            category="tradicional"
           />
         </View>
 
@@ -295,23 +400,23 @@ export default function Cardapio() {
           >
             ✨ Pizzas Especiais
           </Text>
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Quatro Queijos"
             description="Mussarela, parmesão, gorgonzola e provolone"
-            price="A partir de R$ 45,90"
+            category="especial"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Pepperoni"
             description="Molho de tomate, mussarela e pepperoni"
-            price="A partir de R$ 44,90"
+            category="especial"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Bacon com Ovos"
             description="Molho de tomate, mussarela, bacon e ovos"
-            price="A partir de R$ 43,90"
+            category="especial"
           />
         </View>
 
@@ -338,25 +443,25 @@ export default function Cardapio() {
           >
             🍫 Pizzas Doces
           </Text>
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Chocolate com Morango"
-            price="A partir de R$ 39,90"
+            category="doce"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Banana com Canela"
-            price="A partir de R$ 37,90"
+            category="doce"
           />
-          <MenuItem
+          <PizzaMenuItem
             responsive={responsive}
             name="Banana Nevada"
             description="Banana, leite condensado e chocolate branco"
-            price="A partir de R$ 39,90"
+            category="doce"
           />
         </View>
 
-        {/* Categoria: Bebidas */}
+        {/* Categoria: Bebidas (Usa MenuItem normal pois o preço é fixo) */}
         <View
           style={{
             marginBottom: 50,
@@ -379,29 +484,10 @@ export default function Cardapio() {
           >
             🥤 Bebidas
           </Text>
-          <MenuItem
-            responsive={responsive}
-            name="Refrigerante Lata"
-            description="Coca, Guaraná, Pepsi"
-            price="R$ 6,00"
-          />
-          <MenuItem
-            responsive={responsive}
-            name="Refrigerante 2L"
-            price="R$ 12,00"
-          />
-          <MenuItem
-            responsive={responsive}
-            name="Suco Natural"
-            description="Morango, Maracujá, Laranja"
-            price="R$ 8,00"
-          />
-          <MenuItem
-            responsive={responsive}
-            name="Água Mineral"
-            description="Com ou sem gás"
-            price="R$ 4,00"
-          />
+          <MenuItem responsive={responsive} name="Refrigerante Lata" description="Coca, Guaraná, Pepsi" price="R$ 6,00" />
+          <MenuItem responsive={responsive} name="Refrigerante 2L" price="R$ 12,00" />
+          <MenuItem responsive={responsive} name="Suco Natural" description="Morango, Maracujá, Laranja" price="R$ 8,00" />
+          <MenuItem responsive={responsive} name="Água Mineral" description="Com ou sem gás" price="R$ 4,00" />
         </View>
 
         {/* Dicas para sua Experiência */}
@@ -426,69 +512,27 @@ export default function Cardapio() {
             💡 Dicas para sua Experiência
           </Text>
           <View style={{ marginBottom: 12 }}>
-            <Text
-              style={{
-                fontSize: responsive.textSize,
-                color: "#12a049",
-                fontWeight: "600",
-                marginBottom: 4,
-              }}
-            >
+            <Text style={{ fontSize: responsive.textSize, color: "#12a049", fontWeight: "600", marginBottom: 4 }}>
               ✓ Personalize sua Pizza
             </Text>
-            <Text
-              style={{
-                fontSize: responsive.textSize,
-                color: "#f0f0f0",
-                lineHeight: 18,
-              }}
-            >
-              Combine ingredientes! Você pode criar sua própria pizza
-              selecionando a massa, molho e até 8 ingredientes diferentes.
+            <Text style={{ fontSize: responsive.textSize, color: "#f0f0f0", lineHeight: 18 }}>
+              Combine ingredientes! Você pode criar sua própria pizza selecionando a massa, molho e até 8 ingredientes diferentes.
             </Text>
           </View>
           <View style={{ marginBottom: 12 }}>
-            <Text
-              style={{
-                fontSize: responsive.textSize,
-                color: "#12a049",
-                fontWeight: "600",
-                marginBottom: 4,
-              }}
-            >
+            <Text style={{ fontSize: responsive.textSize, color: "#12a049", fontWeight: "600", marginBottom: 4 }}>
               ✓ Bordas Especiais
             </Text>
-            <Text
-              style={{
-                fontSize: responsive.textSize,
-                color: "#f0f0f0",
-                lineHeight: 18,
-              }}
-            >
-              Nossas bordas recheadas elevam sua experiência! Teste Catupiry,
-              Cream Cheese ou até Chocolate para as sobremesas.
+            <Text style={{ fontSize: responsive.textSize, color: "#f0f0f0", lineHeight: 18 }}>
+              Nossas bordas recheadas elevam sua experiência! Teste Catupiry, Cream Cheese ou até Chocolate para as sobremesas.
             </Text>
           </View>
           <View>
-            <Text
-              style={{
-                fontSize: responsive.textSize,
-                color: "#12a049",
-                fontWeight: "600",
-                marginBottom: 4,
-              }}
-            >
+            <Text style={{ fontSize: responsive.textSize, color: "#12a049", fontWeight: "600", marginBottom: 4 }}>
               ✓ Combo Econômico
             </Text>
-            <Text
-              style={{
-                fontSize: responsive.textSize,
-                color: "#f0f0f0",
-                lineHeight: 18,
-              }}
-            >
-              Peça nossa pizza grande (45cm) com uma bebida 2L - ótimo
-              custo-benefício para famílias!
+            <Text style={{ fontSize: responsive.textSize, color: "#f0f0f0", lineHeight: 18 }}>
+              Peça nossa pizza grande (45cm) com uma bebida 2L - ótimo custo-benefício para famílias!
             </Text>
           </View>
         </View>
