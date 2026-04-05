@@ -40,7 +40,6 @@ interface Address {
   numero: string;
   bairro: string;
   cidade: string;
-  cep: string;
 }
 
 interface OrderPayload {
@@ -62,7 +61,6 @@ interface OrderPayload {
     numero: string;
     bairro: string;
     cidade: string;
-    cep: string;
   };
   valorTotal: number;
   dataPedido: string;
@@ -155,7 +153,6 @@ const INITIAL_ADDRESS: Address = {
   numero: "",
   bairro: "",
   cidade: "",
-  cep: "",
 };
 
 const INITIAL_CART: CartState = {
@@ -244,7 +241,6 @@ export default function PedidoWizard() {
   };
 
   const getAddressLabel = (field: keyof Address) => {
-    if (field === "cep") return "CEP";
     return field;
   };
 
@@ -280,7 +276,6 @@ export default function PedidoWizard() {
     "numero",
     "bairro",
     "cidade",
-    "cep",
   ];
 
   const getMissingOrderFields = () => {
@@ -301,7 +296,6 @@ export default function PedidoWizard() {
       numero: "número",
       bairro: "bairro",
       cidade: "cidade",
-      cep: "CEP",
     };
 
     getRequiredAddressFields().forEach((field) => {
@@ -340,7 +334,6 @@ export default function PedidoWizard() {
         numero: cart.endereco.numero.trim(),
         bairro: cart.endereco.bairro.trim(),
         cidade: cart.endereco.cidade.trim(),
-        cep: cart.endereco.cep.trim(),
       },
       valorTotal: Number(getTotal().toFixed(2)),
       dataPedido: new Date().toISOString(),
@@ -372,6 +365,41 @@ export default function PedidoWizard() {
       ORDER_STORAGE_KEY,
       JSON.stringify([order, ...parsedOrders]),
     );
+  };
+
+  // Função complementar: Exporta o pedido para arquivo JSON local
+  const exportarPedidoParaArquivo = async (order: OrderPayload) => {
+    try {
+      // Funcionalidade complementar: envia os dados para o dev-server,
+      // que persiste no arquivo fixo pedidos.json na raiz do projeto.
+      await sincronizarComDevAPI(order);
+    } catch (error) {
+      console.error("❌ Erro ao exportar pedido:", error);
+    }
+  };
+
+  // Função complementar: Envia o pedido para uma API de desenvolvimento
+  const sincronizarComDevAPI = async (order: OrderPayload) => {
+    try {
+      // Tenta enviar para um backend local (localhost:3000)
+      // Esta é uma funcionalidade OPCIONAL para sincronizar com seu PC
+      const devServerUrl = "http://localhost:3000/api/pedidos";
+
+      const response = await fetch(devServerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order),
+      });
+
+      if (response.ok) {
+        console.log("✅ Pedido sincronizado com servidor de desenvolvimento");
+      }
+    } catch (error) {
+      // Silenciosamente falha se o servidor não estiver disponível
+      console.log(
+        "ℹ️  Dev API indisponível (esperado se o servidor local não está rodando)",
+      );
+    }
   };
 
   const getFlavorBasePrice = (flavor: Flavor, size: PizzaSize) => {
@@ -542,6 +570,8 @@ export default function PedidoWizard() {
     try {
       setIsSubmittingOrder(true);
       await saveOrderToStorage(orderPayload);
+      // Função complementar: exporta para arquivo JSON
+      await exportarPedidoParaArquivo(orderPayload);
       setIsSuccessModalVisible(true);
     } catch {
       Alert.alert(
@@ -1045,10 +1075,8 @@ export default function PedidoWizard() {
           style={styles.input}
           placeholder={`Digite ${getPronome(field)} ${getAddressLabel(field)}`}
           value={cart.endereco[field]}
-          keyboardType={
-            field === "numero" || field === "cep" ? "number-pad" : "default"
-          }
-          onChangeText={(text) =>
+          keyboardType={field === "numero" ? "number-pad" : "default"}
+          onChangeText={(text: string) =>
             setCart({
               ...cart,
               endereco: { ...cart.endereco, [field]: text },
@@ -1117,9 +1145,7 @@ export default function PedidoWizard() {
         <Text style={styles.summaryItem}>
           {cart.endereco.rua}, {cart.endereco.numero} - {cart.endereco.bairro}
         </Text>
-        <Text style={styles.summaryItem}>
-          {cart.endereco.cidade} - CEP {cart.endereco.cep}
-        </Text>
+        <Text style={styles.summaryItem}>{cart.endereco.cidade}</Text>
       </View>
     </View>
   );

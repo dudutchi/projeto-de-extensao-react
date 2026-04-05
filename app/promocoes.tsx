@@ -27,7 +27,7 @@ const useResponsive = () => {
       imageHeight: isTablet ? 280 : 200,
       buttonPadding: isTablet ? 16 : 14,
     }),
-    [width, isTablet],
+    [isTablet],
   );
 };
 

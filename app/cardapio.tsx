@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
 import {
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  TouchableOpacity,
+    SafeAreaView,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
+    useWindowDimensions,
 } from "react-native";
 
 // --- TIPAGENS ---
@@ -61,7 +61,7 @@ const useResponsive = () => {
       sectionPadding: isTablet ? 24 : 16,
       itemMargin: isTablet ? 18 : 14,
     }),
-    [width, isTablet]
+    [isTablet],
   );
 };
 
@@ -329,9 +329,21 @@ export default function Cardapio() {
           >
             🧀 Bordas Recheadas
           </Text>
-          <MenuItem responsive={responsive} name="Catupiry ou Cheddar" price="R$ 15,00" />
-          <MenuItem responsive={responsive} name="Cream Cheese" price="R$ 17,00" />
-          <MenuItem responsive={responsive} name="Chocolate (Preto/Branco)" price="R$ 20,00" />
+          <MenuItem
+            responsive={responsive}
+            name="Catupiry ou Cheddar"
+            price="R$ 15,00"
+          />
+          <MenuItem
+            responsive={responsive}
+            name="Cream Cheese"
+            price="R$ 17,00"
+          />
+          <MenuItem
+            responsive={responsive}
+            name="Chocolate (Preto/Branco)"
+            price="R$ 20,00"
+          />
         </View>
 
         {/* Categoria: Tradicionais */}
@@ -484,10 +496,29 @@ export default function Cardapio() {
           >
             🥤 Bebidas
           </Text>
-          <MenuItem responsive={responsive} name="Refrigerante Lata" description="Coca, Guaraná, Pepsi" price="R$ 6,00" />
-          <MenuItem responsive={responsive} name="Refrigerante 2L" price="R$ 12,00" />
-          <MenuItem responsive={responsive} name="Suco Natural" description="Morango, Maracujá, Laranja" price="R$ 8,00" />
-          <MenuItem responsive={responsive} name="Água Mineral" description="Com ou sem gás" price="R$ 4,00" />
+          <MenuItem
+            responsive={responsive}
+            name="Refrigerante Lata"
+            description="Coca, Guaraná, Pepsi"
+            price="R$ 6,00"
+          />
+          <MenuItem
+            responsive={responsive}
+            name="Refrigerante 2L"
+            price="R$ 12,00"
+          />
+          <MenuItem
+            responsive={responsive}
+            name="Suco Natural"
+            description="Morango, Maracujá, Laranja"
+            price="R$ 8,00"
+          />
+          <MenuItem
+            responsive={responsive}
+            name="Água Mineral"
+            description="Com ou sem gás"
+            price="R$ 4,00"
+          />
         </View>
 
         {/* Dicas para sua Experiência */}
@@ -512,27 +543,69 @@ export default function Cardapio() {
             💡 Dicas para sua Experiência
           </Text>
           <View style={{ marginBottom: 12 }}>
-            <Text style={{ fontSize: responsive.textSize, color: "#12a049", fontWeight: "600", marginBottom: 4 }}>
+            <Text
+              style={{
+                fontSize: responsive.textSize,
+                color: "#12a049",
+                fontWeight: "600",
+                marginBottom: 4,
+              }}
+            >
               ✓ Personalize sua Pizza
             </Text>
-            <Text style={{ fontSize: responsive.textSize, color: "#f0f0f0", lineHeight: 18 }}>
-              Combine ingredientes! Você pode criar sua própria pizza selecionando a massa, molho e até 8 ingredientes diferentes.
+            <Text
+              style={{
+                fontSize: responsive.textSize,
+                color: "#f0f0f0",
+                lineHeight: 18,
+              }}
+            >
+              Combine ingredientes! Você pode criar sua própria pizza
+              selecionando a massa, molho e até 8 ingredientes diferentes.
             </Text>
           </View>
           <View style={{ marginBottom: 12 }}>
-            <Text style={{ fontSize: responsive.textSize, color: "#12a049", fontWeight: "600", marginBottom: 4 }}>
+            <Text
+              style={{
+                fontSize: responsive.textSize,
+                color: "#12a049",
+                fontWeight: "600",
+                marginBottom: 4,
+              }}
+            >
               ✓ Bordas Especiais
             </Text>
-            <Text style={{ fontSize: responsive.textSize, color: "#f0f0f0", lineHeight: 18 }}>
-              Nossas bordas recheadas elevam sua experiência! Teste Catupiry, Cream Cheese ou até Chocolate para as sobremesas.
+            <Text
+              style={{
+                fontSize: responsive.textSize,
+                color: "#f0f0f0",
+                lineHeight: 18,
+              }}
+            >
+              Nossas bordas recheadas elevam sua experiência! Teste Catupiry,
+              Cream Cheese ou até Chocolate para as sobremesas.
             </Text>
           </View>
           <View>
-            <Text style={{ fontSize: responsive.textSize, color: "#12a049", fontWeight: "600", marginBottom: 4 }}>
+            <Text
+              style={{
+                fontSize: responsive.textSize,
+                color: "#12a049",
+                fontWeight: "600",
+                marginBottom: 4,
+              }}
+            >
               ✓ Combo Econômico
             </Text>
-            <Text style={{ fontSize: responsive.textSize, color: "#f0f0f0", lineHeight: 18 }}>
-              Peça nossa pizza grande (45cm) com uma bebida 2L - ótimo custo-benefício para famílias!
+            <Text
+              style={{
+                fontSize: responsive.textSize,
+                color: "#f0f0f0",
+                lineHeight: 18,
+              }}
+            >
+              Peça nossa pizza grande (45cm) com uma bebida 2L - ótimo
+              custo-benefício para famílias!
             </Text>
           </View>
         </View>

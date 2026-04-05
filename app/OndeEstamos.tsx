@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import {
-  Image,
-  Linking,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
+    Image,
+    Linking,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    Text,
+    View,
+    useWindowDimensions,
 } from "react-native";
 
 const useResponsive = () => {
@@ -25,7 +25,7 @@ const useResponsive = () => {
       imageHeight: isTablet ? 400 : 280,
       buttonPadding: isTablet ? 16 : 14,
     }),
-    [width, isTablet],
+    [isTablet],
   );
 };
 
@@ -162,7 +162,8 @@ export default function OndeEstamos() {
               opacity: 0.8,
             }}
           >
-            Basta buscar por: "Pizzaria CarioK – Rua Venceslau 318, Méier".
+            Basta buscar por: &quot;Pizzaria CarioK – Rua Venceslau 318,
+            Méier&quot;.
           </Text>
         </View>
 

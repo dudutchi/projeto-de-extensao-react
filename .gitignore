@@ -41,3 +41,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Persistência de pedidos (desenvolvimento local)
+pedidos.json
+pedido-*.json
+

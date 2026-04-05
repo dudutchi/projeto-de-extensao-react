@@ -1,12 +1,12 @@
 import { router } from "expo-router";
 import { useMemo } from "react";
 import {
-  Dimensions,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View
+    Dimensions,
+    Image,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 
 const useResponsive = () => {
@@ -26,7 +26,7 @@ const useResponsive = () => {
       imageHeight: isTablet ? 400 : 280,
       buttonPadding: isTablet ? 16 : 14,
     }),
-    [width, isTablet],
+    [width, height, isTablet],
   );
 };
 
@@ -402,7 +402,7 @@ export default function Index() {
             fontStyle: "italic",
           }}
         >
-          "Sabor de verdade é feito com amor."
+          &quot;Sabor de verdade é feito com amor.&quot;
         </Text>
       </View>
     </ScrollView>
