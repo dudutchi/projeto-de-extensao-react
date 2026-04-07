@@ -32,6 +32,7 @@ interface Flavor {
 interface ItemPrice {
   name: string;
   price: number;
+  options?: string[];
 }
 
 interface Address {
@@ -70,8 +71,8 @@ interface CartState {
   tipo: PedidoTipo | null;
   sabores: Flavor[];
   tamanho: PizzaSize | null;
-  borda: ItemPrice | null;
-  bebidas: (ItemPrice & { quantity: number })[];
+  borda: (ItemPrice & { selectedOption?: string }) | null;
+  bebidas: (ItemPrice & { quantity: number; selectedOption?: string })[];
   pagamento: string | null;
   endereco: Address;
 }
@@ -132,14 +133,26 @@ const SIZE_OPTIONS: { value: PizzaSize; label: string }[] = [
 
 const CRUSTS: ItemPrice[] = [
   { name: "Sem Borda", price: 0 },
-  { name: "Catupiry ou Cheddar", price: 15.0 },
+  {
+    name: "Catupiry ou Cheddar",
+    price: 15.0,
+    options: ["Catupiry", "Cheddar"],
+  },
   { name: "Cream Cheese", price: 17.0 },
   { name: "Chocolate", price: 20.0 },
 ];
 
 const DRINKS: ItemPrice[] = [
-  { name: "Refrigerante Lata", price: 6.0 },
-  { name: "Refrigerante 2L", price: 12.0 },
+  {
+    name: "Refrigerante Lata",
+    price: 6.0,
+    options: ["Coca-Cola", "Guaraná", "Pepsi"],
+  },
+  {
+    name: "Refrigerante 2L",
+    price: 12.0,
+    options: ["Coca-Cola", "Guaraná", "Pepsi"],
+  },
   { name: "Suco Natural", price: 8.0 },
   { name: "Água Mineral", price: 4.0 },
 ];
@@ -198,6 +211,7 @@ export default function PedidoWizard() {
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [activeDrinkOptions, setActiveDrinkOptions] = useState<string | null>(null);
 
   useEffect(() => {
     if (
@@ -220,7 +234,7 @@ export default function PedidoWizard() {
     if (cart.tipo === "meia" && cart.sabores.length === 2) {
       const price1 = PIZZA_PRICES[cart.sabores[0].category][cart.tamanho];
       const price2 = PIZZA_PRICES[cart.sabores[1].category][cart.tamanho];
-      return Math.max(price1, price2); // Regra: Cobra o valor da mais cara
+      return Math.max(price1, price2);
     }
     return 0;
   };
@@ -307,7 +321,6 @@ export default function PedidoWizard() {
     return missingFields;
   };
 
-  // Monta o JSON do pedido com a estrutura pronta para futura integração.
   const buildOrderPayload = (): OrderPayload | null => {
     if (!cart.tipo || !cart.tamanho || !cart.pagamento) {
       return null;
@@ -340,7 +353,6 @@ export default function PedidoWizard() {
     };
   };
 
-  // Persiste o histórico dos pedidos em JSON no storage adequado da plataforma.
   const saveOrderToStorage = async (order: OrderPayload) => {
     if (Platform.OS === "web") {
       const existingOrders =
@@ -367,22 +379,16 @@ export default function PedidoWizard() {
     );
   };
 
-  // Função complementar: Exporta o pedido para arquivo JSON local
   const exportarPedidoParaArquivo = async (order: OrderPayload) => {
     try {
-      // Funcionalidade complementar: envia os dados para o dev-server,
-      // que persiste no arquivo fixo pedidos.json na raiz do projeto.
       await sincronizarComDevAPI(order);
     } catch (error) {
       console.error("❌ Erro ao exportar pedido:", error);
     }
   };
 
-  // Função complementar: Envia o pedido para uma API de desenvolvimento
   const sincronizarComDevAPI = async (order: OrderPayload) => {
     try {
-      // Tenta enviar para um backend local (localhost:3000)
-      // Esta é uma funcionalidade OPCIONAL para sincronizar com seu PC
       const devServerUrl = "http://localhost:3000/api/pedidos";
 
       const response = await fetch(devServerUrl, {
@@ -395,7 +401,6 @@ export default function PedidoWizard() {
         console.log("✅ Pedido sincronizado com servidor de desenvolvimento");
       }
     } catch (error) {
-      // Silenciosamente falha se o servidor não estiver disponível
       console.log(
         "ℹ️  Dev API indisponível (esperado se o servidor local não está rodando)",
       );
@@ -510,7 +515,6 @@ export default function PedidoWizard() {
     </View>
   );
 
-  // --- NAVEGAÇÃO DO WIZARD ---
   const handleNext = () => setStep((prev) => Math.min(prev + 1, 6));
 
   const resetOrderState = () => {
@@ -535,7 +539,6 @@ export default function PedidoWizard() {
   };
 
   const handleBack = () => {
-    // Regra: Ao voltar, limpar os dados da etapa atual
     if (step === 2) setCart({ ...cart, borda: null });
     if (step === 3) setCart({ ...cart, bebidas: [] });
     if (step === 4) setCart({ ...cart, pagamento: null });
@@ -552,7 +555,9 @@ export default function PedidoWizard() {
     if (missingFields.length > 0) {
       Alert.alert(
         "Pedido incompleto",
-        `Preencha os seguintes campos antes de finalizar: ${missingFields.join(", ")}.`,
+        `Preencha os seguintes campos antes de finalizar: ${missingFields.join(
+          ", ",
+        )}.`,
       );
       return;
     }
@@ -570,7 +575,6 @@ export default function PedidoWizard() {
     try {
       setIsSubmittingOrder(true);
       await saveOrderToStorage(orderPayload);
-      // Função complementar: exporta para arquivo JSON
       await exportarPedidoParaArquivo(orderPayload);
       setIsSuccessModalVisible(true);
     } catch {
@@ -583,7 +587,6 @@ export default function PedidoWizard() {
     }
   };
 
-  // --- VALIDAÇÕES DE ETAPA ---
   const isStepValid = () => {
     switch (step) {
       case 1:
@@ -595,7 +598,7 @@ export default function PedidoWizard() {
       case 2:
         return cart.borda !== null;
       case 3:
-        return true; // Bebidas são opcionais
+        return true;
       case 4:
         return cart.pagamento !== null;
       case 5:
@@ -606,8 +609,6 @@ export default function PedidoWizard() {
         return true;
     }
   };
-
-  // --- RENDERIZADORES DE ETAPAS ---
 
   const renderSingleFlavorSelection = () => (
     <View>
@@ -861,7 +862,6 @@ export default function PedidoWizard() {
         1. Escolha sua Pizza
       </Text>
 
-      {/* Tipo de Pizza */}
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
         {(["inteira", "meia"] as PedidoTipo[]).map((tipo) => (
           <TouchableOpacity
@@ -892,10 +892,7 @@ export default function PedidoWizard() {
         ))}
       </View>
 
-      {/* Pizza inteira mantém o tamanho dentro do sabor selecionado. */}
       {cart.tipo === "inteira" && renderSingleFlavorSelection()}
-
-      {/* Meio a meio inverte o fluxo: primeiro o tamanho, depois os 2 sabores. */}
       {cart.tipo === "meia" && renderHalfAndHalfSizeSelection()}
       {cart.tipo === "meia" && renderHalfAndHalfFlavorSelection()}
 
@@ -905,7 +902,9 @@ export default function PedidoWizard() {
         >
           {cart.tipo === "inteira"
             ? `Tamanho selecionado: ${cart.tamanho}. Agora você já pode avançar.`
-            : `Pizza meio a meio pronta: ${cart.tamanho} (${getSizeLabel(cart.tamanho)}) com ${cart.sabores[0].name} e ${cart.sabores[1].name}.`}
+            : `Pizza meio a meio pronta: ${cart.tamanho} (${getSizeLabel(
+                cart.tamanho,
+              )}) com ${cart.sabores[0].name} e ${cart.sabores[1].name}.`}
         </Text>
       )}
     </View>
@@ -918,34 +917,77 @@ export default function PedidoWizard() {
       >
         2. Bordas Recheadas
       </Text>
-      {CRUSTS.map((crust) => (
-        <TouchableOpacity
-          key={crust.name}
-          style={[
-            styles.listItem,
-            cart.borda?.name === crust.name && styles.listItemSelected,
-          ]}
-          onPress={() => setCart({ ...cart, borda: crust })}
-        >
-          <Text
-            style={[
-              styles.itemName,
-              { fontSize: responsive.itemNameSize },
-              cart.borda?.name === crust.name && { color: "#fff" },
-            ]}
-          >
-            {crust.name}
-          </Text>
-          <Text
-            style={[
-              styles.priceText,
-              cart.borda?.name === crust.name && { color: "#fff" },
-            ]}
-          >
-            {crust.price > 0 ? `+ ${formatMoney(crust.price)}` : "Grátis"}
-          </Text>
-        </TouchableOpacity>
-      ))}
+
+      {CRUSTS.map((crust) => {
+        const isSelected = cart.borda?.name === crust.name;
+
+        return (
+          <View key={crust.name}>
+            <TouchableOpacity
+              style={[styles.listItem, isSelected && styles.listItemSelected]}
+              onPress={() =>
+                setCart({
+                  ...cart,
+                  borda: { ...crust },
+                })
+              }
+            >
+              <Text
+                style={[
+                  styles.itemName,
+                  { fontSize: responsive.itemNameSize },
+                  isSelected && { color: "#fff" },
+                ]}
+              >
+                {crust.name}
+              </Text>
+
+              <Text
+                style={[
+                  styles.priceText,
+                  isSelected && { color: "#fff" },
+                ]}
+              >
+                {crust.price > 0 ? `+ ${formatMoney(crust.price)}` : "Grátis"}
+              </Text>
+            </TouchableOpacity>
+
+            {isSelected && crust.options && (
+              <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
+                {crust.options.map((opt) => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={{
+                      padding: 10,
+                      borderRadius: 8,
+                      backgroundColor:
+                        cart.borda?.selectedOption === opt ? "#1a5c1a" : "#eee",
+                    }}
+                    onPress={() =>
+                      setCart({
+                        ...cart,
+                        borda: {
+                          ...crust,
+                          selectedOption: opt,
+                        },
+                      })
+                    }
+                  >
+                    <Text
+                      style={{
+                        color:
+                          cart.borda?.selectedOption === opt ? "#fff" : "#000",
+                      }}
+                    >
+                      {opt}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        );
+      })}
     </View>
   );
 
@@ -956,72 +998,131 @@ export default function PedidoWizard() {
       >
         3. Bebidas (Opcional)
       </Text>
+
       {DRINKS.map((drink) => {
         const cartDrink = cart.bebidas.find((b) => b.name === drink.name);
         const qty = cartDrink ? cartDrink.quantity : 0;
 
         return (
-          <View
-            key={drink.name}
-            style={[
-              styles.listItem,
-              {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              },
-            ]}
-          >
-            <View>
-              <Text
-                style={[styles.itemName, { fontSize: responsive.itemNameSize }]}
-              >
-                {drink.name}
-              </Text>
-              <Text style={styles.priceText}>{formatMoney(drink.price)}</Text>
-            </View>
+          <View key={drink.name}>
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              style={[
+                styles.listItem,
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                },
+              ]}
             >
-              <TouchableOpacity
-                style={styles.btnQty}
-                onPress={() => {
-                  if (qty > 0) {
-                    const updated = cart.bebidas
-                      .map((b) =>
+              <View>
+                <Text
+                  style={[styles.itemName, { fontSize: responsive.itemNameSize }]}
+                >
+                  {drink.name}
+                </Text>
+                <Text style={styles.priceText}>{formatMoney(drink.price)}</Text>
+              </View>
+
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+              >
+                <TouchableOpacity
+                  style={styles.btnQty}
+                  onPress={() => {
+                    if (qty > 0) {
+                      const updated = cart.bebidas
+                        .map((b) =>
+                          b.name === drink.name
+                            ? { ...b, quantity: b.quantity - 1 }
+                            : b
+                        )
+                        .filter((b) => b.quantity > 0);
+
+                      setCart({ ...cart, bebidas: updated });
+                    }
+                  }}
+                >
+                  <Text style={styles.btnQtyText}>-</Text>
+                </TouchableOpacity>
+
+                <Text style={{ fontSize: 16, fontWeight: "bold" }}>{qty}</Text>
+
+                <TouchableOpacity
+                  style={styles.btnQty}
+                  onPress={() => {
+                    if (drink.options) {
+                      setActiveDrinkOptions(drink.name);
+                      return;
+                    }
+
+                    if (qty === 0) {
+                      setCart({
+                        ...cart,
+                        bebidas: [...cart.bebidas, { ...drink, quantity: 1 }],
+                      });
+                    } else {
+                      const updated = cart.bebidas.map((b) =>
                         b.name === drink.name
-                          ? { ...b, quantity: b.quantity - 1 }
-                          : b,
-                      )
-                      .filter((b) => b.quantity > 0);
-                    setCart({ ...cart, bebidas: updated });
-                  }
-                }}
-              >
-                <Text style={styles.btnQtyText}>-</Text>
-              </TouchableOpacity>
-              <Text style={{ fontSize: 16, fontWeight: "bold" }}>{qty}</Text>
-              <TouchableOpacity
-                style={styles.btnQty}
-                onPress={() => {
-                  if (qty === 0) {
-                    setCart({
-                      ...cart,
-                      bebidas: [...cart.bebidas, { ...drink, quantity: 1 }],
-                    });
-                  } else {
-                    const updated = cart.bebidas.map((b) =>
-                      b.name === drink.name
-                        ? { ...b, quantity: b.quantity + 1 }
-                        : b,
-                    );
-                    setCart({ ...cart, bebidas: updated });
-                  }
-                }}
-              >
-                <Text style={styles.btnQtyText}>+</Text>
-              </TouchableOpacity>
+                          ? { ...b, quantity: b.quantity + 1 }
+                          : b
+                      );
+                      setCart({ ...cart, bebidas: updated });
+                    }
+                  }}
+                >
+                  <Text style={styles.btnQtyText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+
+            {activeDrinkOptions === drink.name && drink.options && (
+              <View
+                style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}
+              >
+                {drink.options.map((opt) => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={{
+                      padding: 10,
+                      borderRadius: 8,
+                      backgroundColor: "#1a5c1a",
+                    }}
+                    onPress={() => {
+                      const existing = cart.bebidas.find(
+                        (b) => b.name === drink.name && b.selectedOption === opt,
+                      );
+
+                      if (existing) {
+                        const updated = cart.bebidas.map((b) =>
+                          b.name === drink.name && b.selectedOption === opt
+                            ? { ...b, quantity: b.quantity + 1 }
+                            : b
+                        );
+
+                        setCart({ ...cart, bebidas: updated });
+                      } else {
+                        setCart({
+                          ...cart,
+                          bebidas: [
+                            ...cart.bebidas,
+                            {
+                              ...drink,
+                              quantity: 1,
+                              selectedOption: opt,
+                            },
+                          ],
+                        });
+                      }
+
+                      setActiveDrinkOptions(null);
+                    }}
+                  >
+                    <Text style={{ color: "#fff" }}>{opt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         );
       })}
@@ -1108,13 +1209,17 @@ export default function PedidoWizard() {
         <Text style={styles.summaryPrice}>{formatMoney(getPizzaPrice())}</Text>
 
         <View style={styles.divider} />
-
         <Text style={styles.summaryTitle}>Borda</Text>
-        <Text style={styles.summaryItem}>• {cart.borda?.name}</Text>
+        <Text style={styles.summaryItem}>
+          •{" "}
+          {cart.borda?.selectedOption
+            ? `${cart.borda.selectedOption}`
+            : cart.borda?.name ?? "Sem Borda"}
+        </Text>
         <Text style={styles.summaryPrice}>
           {formatMoney(cart.borda?.price || 0)}
         </Text>
-
+...
         {cart.bebidas.length > 0 && (
           <>
             <View style={styles.divider} />
@@ -1129,6 +1234,7 @@ export default function PedidoWizard() {
               >
                 <Text style={styles.summaryItem}>
                   • {b.quantity}x {b.name}
+                  {b.selectedOption ? ` (${b.selectedOption})` : ""}
                 </Text>
                 <Text style={styles.summaryPrice}>
                   {formatMoney(b.price * b.quantity)}
@@ -1213,7 +1319,6 @@ export default function PedidoWizard() {
         </View>
       </Modal>
 
-      {/* Header Fixo */}
       <View
         style={{
           padding: 20,
@@ -1253,7 +1358,6 @@ export default function PedidoWizard() {
         </View>
       </ScrollView>
 
-      {/* Sacola / Bottom Bar Fixa */}
       <View style={styles.bottomBar}>
         <View
           style={{

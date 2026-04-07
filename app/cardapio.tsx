@@ -505,6 +505,7 @@ export default function Cardapio() {
           <MenuItem
             responsive={responsive}
             name="Refrigerante 2L"
+            description="Coca, Guaraná, Pepsi"
             price="R$ 12,00"
           />
           <MenuItem
